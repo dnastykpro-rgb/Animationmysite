@@ -850,3 +850,8 @@ function animate(now) {
 }
 
 requestAnimationFrame(animate);
+window.onerror = function(msg, url, line) {
+    const st = document.getElementById('status');
+    if (st) st.innerHTML = '<span style="color:#ef4444;font-weight:bold;">Ошибка в строке ' + line + ': ' + msg + '</span>';
+};
+
