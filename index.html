@@ -82,29 +82,28 @@ try {
   scene.fog = new THREE.FogExp2(0xbae6fd, 0.013);
   const camera = new THREE.PerspectiveCamera(48, 720 / 1280, 0.1, 220);
 
-  // Шейдерный градиент неба + квадратное солнце
+  // Градиентное небо и квадратное солнце
   const skyCanv = document.createElement('canvas'); skyCanv.width = 16; skyCanv.height = 256;
   const skyCtx = skyCanv.getContext('2d');
   const grad = skyCtx.createLinearGradient(0, 0, 0, 256);
   grad.addColorStop(0, '#0284c7'); grad.addColorStop(0.45, '#38bdf8');
   grad.addColorStop(0.75, '#bae6fd'); grad.addColorStop(1, '#fef08a');
   skyCtx.fillStyle = grad; skyCtx.fillRect(0, 0, 16, 256);
-  const skyDome = new THREE.Mesh(
+  scene.add(new THREE.Mesh(
     new THREE.SphereGeometry(120, 24, 16),
     new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(skyCanv), side: THREE.BackSide, fog: false })
-  );
-  scene.add(skyDome);
+  ));
 
   const sunGroup = new THREE.Group();
   sunGroup.position.set(35, 42, -55);
-  const sunCore = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 1), new THREE.MeshBasicMaterial({ color: 0xfef9c3, fog: false }));
-  const sunHalo = new THREE.Mesh(new THREE.BoxGeometry(16, 16, 0.8), new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.35, fog: false }));
-  sunGroup.add(sunCore, sunHalo);
+  sunGroup.add(
+    new THREE.Mesh(new THREE.BoxGeometry(10, 10, 1), new THREE.MeshBasicMaterial({ color: 0xfef9c3, fog: false })),
+    new THREE.Mesh(new THREE.BoxGeometry(16, 16, 0.8), new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.35, fog: false }))
+  );
   scene.add(sunGroup);
 
-  // Теплое солнечное освещение + мягкие тени
-  scene.add(new THREE.HemisphereLight(0xe0f2fe, 0x3f6212, 0.85));
-  const dirLight = new THREE.DirectionalLight(0xfffbeb, 1.65);
+  scene.add(new THREE.HemisphereLight(0xe0f2fe, 0x3f6212, 0.9));
+  const dirLight = new THREE.DirectionalLight(0xfffbeb, 1.6);
   dirLight.position.set(16, 28, 18);
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.set(2048, 2048);
@@ -139,7 +138,6 @@ try {
   const bGeo = new THREE.BoxGeometry(1, 1, 1);
   function blk(x, y, z, m) { const o = new THREE.Mesh(bGeo, m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; world.add(o); }
 
-  // Остров 1 + декор (цветы, трава, руда)
   for (let x = -3; x <= 3; x++) for (let z = -2; z <= 3; z++) {
     if (Math.abs(x)==3 && Math.abs(z)==3) continue;
     blk(x,-.5,z,mG); blk(x,-1.5,z,mD);
@@ -158,7 +156,6 @@ try {
   addFlower(2, 1, 0xfacc15); addFlower(2.4, 2, 0xf43f5e); addFlower(-2.5, 2, 0x38bdf8);
   addFlower(-2.5, 11.5, 0xfacc15); addFlower(2.5, 14.5, 0xf43f5e);
 
-  // Мост с теплыми фонарями
   for (let z = 4; z <= 9; z++) {
     blk(-1,-.5,z,mP); blk(0,-.5,z,mP); blk(1,-.5,z,mP);
     if (z % 3 == 1) Array.of(-1.3, 1.3).forEach(px => {
@@ -168,7 +165,6 @@ try {
     });
   }
 
-  // Остров 2 + дерево и светящийся кристалл
   for (let x = -4; x <= 4; x++) for (let z = 10; z <= 16; z++) {
     if (Math.abs(x)==4 && (z==10 || z==16)) continue;
     blk(x,-.5,z,mG); blk(x,-1.5,z,mD);
@@ -180,7 +176,6 @@ try {
   const crys = new THREE.Mesh(new THREE.OctahedronGeometry(.6), new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0ea5e9, emissiveIntensity: 1.1, roughness: 0.2 }));
   crys.position.set(-3, .7, 13); world.add(crys);
 
-  // Светящиеся частицы эфира в воздухе
   const pCount = 90, pGeo = new THREE.BufferGeometry(), pArr = new Float32Array(pCount * 3);
   for (let i = 0; i < pCount * 3; i += 3) { pArr[i] = (Math.random()-.5)*18; pArr[i+1] = Math.random()*7; pArr[i+2] = -2 + Math.random()*22; }
   pGeo.setAttribute('position', new THREE.BufferAttribute(pArr, 3));
@@ -213,7 +208,6 @@ try {
   const bV1 = mkBan('1.21.11', 'rgba(15,23,42,.9)', '#4ade80', 'JAVA EDITION'); bV1.position.set(1.8,2.25,13.5); bV1.rotation.y = -.25; bV1.scale.set(0,0,0); scene.add(bV1);
   const bV2 = mkBan('26.2', 'rgba(15,23,42,.9)', '#facc15', 'ПОДДЕРЖКА'); bV2.position.set(1.8,1.25,13.5); bV2.rotation.y = -.25; bV2.scale.set(0,0,0); scene.add(bV2);
 
-  // Базовый скин
   const skinCanvas = document.createElement('canvas'); skinCanvas.width = skinCanvas.height = 64;
   const sx = skinCanvas.getContext('2d');
   sx.fillStyle = '#f5cba7'; sx.fillRect(0,0,64,64);
@@ -249,7 +243,6 @@ try {
   const head = sBox(.5,.5,.5,0,0); head.position.y = .25; headP.add(head);
   const headOv = sBox(.55,.55,.55,32,0,true); headOv.position.y = .25; headP.add(headOv);
 
-  // Лицевая мимика поверх головы
   const face = new THREE.Group(); face.position.set(0,.25,.265); headP.add(face);
   const mkEye = x => {
     const g = new THREE.Group(); g.position.set(x,.02,0);
@@ -271,20 +264,52 @@ try {
   const lLeg = mkLimb(.125,.75,0,16,0,32,-.375);
   const rLeg = mkLimb(-.125,.75,0,16,0,32,-.375);
 
-  // Конвертер любых скинов (64x64, 64x32, 128x128)
   function applyUploadedSkin(img) {
-    sx.clearRect(0, 0, 64, 64);
-    if (img.height === 32 && img.width === 64) {
-      // Старый формат 64x32
-      sx.drawImage(img, 0, 0, 64, 32, 0, 0, 64, 32);
-    } else {
-      // Стандарт 64x64 или HD 128x128 (масштабируем четко по пикселям)
-      sx.imageSmoothingEnabled = false;
-      sx.drawImage(img, 0, 0, img.width, img.height, 0, 0, 64, 64);
-    }
-    skinTex.needsUpdate = true;
-  }
+    const newCanv = document.createElement('canvas');
+    newCanv.width = 64; newCanv.height = 64;
+    const nctx = newCanv.getContext('2d');
+    nctx.imageSmoothingEnabled = false;
 
+    if (img.height === 32 && img.width === 64) {
+      nctx.drawImage(img, 0, 0, 64, 32, 0, 0, 64, 32);
+      nctx.drawImage(img, 40, 16, 16, 16, 32, 48, 16, 16);
+      nctx.drawImage(img, 0, 16, 16, 16, 16, 48, 16, 16);
+    } else {
+      nctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, 64, 64);
+    }
+
+    const imgData = nctx.getImageData(0, 0, 64, 64);
+    const d = imgData.data;
+    for (let y = 0; y < 64; y++) {
+      for (let x = 0; x < 64; x++) {
+        const isHatZone = (x >= 32 && y < 16);
+        const isBodyOvZone = (y >= 32);
+        if (isHatZone || isBodyOvZone) {
+          const idx = (y * 64 + x) * 4;
+          if (d[idx] < 10 && d[idx+1] < 10 && d[idx+2] < 10) {
+            d[idx+3] = 0;
+          }
+        }
+      }
+    }
+    nctx.putImageData(imgData, 0, 0);
+
+    const freshTex = new THREE.CanvasTexture(newCanv);
+    freshTex.magFilter = THREE.NearestFilter;
+    freshTex.minFilter = THREE.NearestFilter;
+    freshTex.needsUpdate = true;
+
+    pRoot.traverse(child => {
+      if (child.isMesh && child.material && child.material.map) {
+        child.material.map = freshTex;
+        child.material.color.setHex(0xffffff);
+        child.material.needsUpdate = true;
+      }
+    });
+
+    lEye.visible = false;
+    rEye.visible = false;
+  }
   let audEl = null, audCtx = null, analyser = null, audData = null, audDest = null;
   function setupAud(file) {
     if (audEl) audEl.pause();
@@ -298,6 +323,7 @@ try {
     audEl.currentTime = currentTime;
     if (isPlaying) audEl.play();
   }
+
   let subs = [];
   function parseSubs() {
     subs = document.getElementById('subsIn').value.split('\n').map(l => {
