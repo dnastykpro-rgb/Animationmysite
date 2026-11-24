@@ -264,7 +264,7 @@ try {
   const lLeg = mkLimb(.125,.75,0,16,0,32,-.375);
   const rLeg = mkLimb(-.125,.75,0,16,0,32,-.375);
 
-  function applyUploadedSkin(img) {
+    function applyUploadedSkin(img) {
     const newCanv = document.createElement('canvas');
     newCanv.width = 64; newCanv.height = 64;
     const nctx = newCanv.getContext('2d');
@@ -278,33 +278,30 @@ try {
       nctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, 64, 64);
     }
 
-    const imgData = nctx.getImageData(0, 0, 64, 64);
-    const d = imgData.data;
-    for (let y = 0; y < 64; y++) {
-      for (let x = 0; x < 64; x++) {
-        const isHatZone = (x >= 32 && y < 16);
-        const isBodyOvZone = (y >= 32);
-        if (isHatZone || isBodyOvZone) {
-          const idx = (y * 64 + x) * 4;
-          if (d[idx] < 10 && d[idx+1] < 10 && d[idx+2] < 10) {
-            d[idx+3] = 0;
-          }
-        }
-      }
-    }
-    nctx.putImageData(imgData, 0, 0);
-
     const freshTex = new THREE.CanvasTexture(newCanv);
     freshTex.magFilter = THREE.NearestFilter;
     freshTex.minFilter = THREE.NearestFilter;
     freshTex.needsUpdate = true;
 
+    renderer.toneMapping = THREE.NoToneMapping;
+
     pRoot.traverse(child => {
       if (child.isMesh && child.material && child.material.map) {
-        child.material.map = freshTex;
-        child.material.color.setHex(0xffffff);
-        child.material.needsUpdate = true;
+        const isOv = child.material.transparent;
+        child.material = new THREE.MeshLambertMaterial({
+          map: freshTex,
+          emissive: new THREE.Color(0x282828),
+          transparent: isOv,
+          alphaTest: isOv ? 0.1 : 0,
+          side: isOv ? THREE.DoubleSide : THREE.FrontSide
+        });
       }
+    });
+
+    lEye.visible = false;
+    rEye.visible = false;
+    mouth.material.color.setHex(0x181818);
+  }
     });
 
     lEye.visible = false;
