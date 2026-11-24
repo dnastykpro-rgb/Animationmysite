@@ -682,7 +682,7 @@ const playPauseBtn = document.getElementById('playPauseBtn');
 const restartBtn = document.getElementById('restartBtn');
 const timelineSlider = document.getElementById('timelineSlider');
 const timeDisplay = document.getElementById('timeDisplay');
-const recordBtn = document.getElementById('recordBtn');
+const recordBtn = document.getElementById('recBtn');
 const recordStatus = document.getElementById('recordStatus');
 
 playPauseBtn.onclick = () => {
@@ -735,16 +735,23 @@ document.getElementById('skinInput').onchange = (e) => {
     img.onload = () => {
         skinTexture.image = img;
         skinTexture.needsUpdate = true;
+        recordStatus.textContent = 'Скин успешно применён!';
     };
     img.src = URL.createObjectURL(file);
 };
 
-document.getElementById('audioInput').onchange = (e) => {
+document.getElementById('audIn').onchange = (e) => {
     const file = e.target.files.item(0);
-    if (file) setupAudio(file);
+    if (file) {
+        setupAudio(file);
+        recordStatus.textContent = 'Озвучка загружена!';
+    }
 };
 
-document.getElementById('applySubsBtn').onclick = parseSubtitles;
+document.getElementById('subBtn').onclick = () => {
+    parseSubtitles();
+    recordStatus.textContent = 'Субтитры обновлены!';
+};
 
 // Запись и скачивание видео
 let mediaRecorder = null;
@@ -850,8 +857,3 @@ function animate(now) {
 }
 
 requestAnimationFrame(animate);
-window.onerror = function(msg, url, line) {
-    const st = document.getElementById('status');
-    if (st) st.innerHTML = '<span style="color:#ef4444;font-weight:bold;">Ошибка в строке ' + line + ': ' + msg + '</span>';
-};
-
