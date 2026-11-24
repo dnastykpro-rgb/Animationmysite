@@ -438,7 +438,7 @@ function getSpeechAmplitude(t) {
 
 let subtitlesList = [];
 function parseSubtitles() {
-    const raw = document.getElementById('subtitlesInput').value;
+    const raw = document.getElementById('subsIn').value;
     subtitlesList = raw.split('\n').map(line => {
         const parts = line.split('|');
         if (parts.length < 2) return null;
