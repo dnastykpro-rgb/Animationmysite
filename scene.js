@@ -195,8 +195,14 @@ crystal1.position.set(-3, 0.6, 13);
 worldGroup.add(crystal1);
 // === ЧАСТЬ 2: ОБЛАКА, 3D-ПЛАШКИ И ПЕРСОНАЖ ===
 const bgIslands = [];
-const islandCoords = [[-14, 2, 6], [15, -1, 10], [-12, 5, 22], [14, 4, 24]];
-islandCoords.forEach(([ix, iy, iz]) => {
+const islandCoords = [
+    [-14, 2, 6],
+    [15, -1, 10],
+    [-12, 5, 22],
+    [14, 4, 24]
+];
+islandCoords.forEach((coord) => {
+    const ix = coord.at(0), iy = coord.at(1), iz = coord.at(2);
     const g = new THREE.Group();
     for (let x = -2; x <= 2; x++) {
         for (let z = -2; z <= 2; z++) {
@@ -423,7 +429,7 @@ function getSpeechAmplitude(t) {
     if (analyser && audioElement && !audioElement.paused) {
         analyser.getByteFrequencyData(audioDataArray);
         let sum = 0;
-        for (let i = 0; i < 30; i++) sum += audioDataArray[i];
+        for (let i = 0; i < 30; i++) sum += audioDataArray.at(i);
         return Math.min(1, (sum / 30) / 140);
     }
     const activeSub = subtitlesList.find(s => t >= s.start && t <= s.end);
@@ -437,10 +443,10 @@ function parseSubtitles() {
     subtitlesList = raw.split('\n').map(line => {
         const parts = line.split('|');
         if (parts.length < 2) return null;
-        const times = parts[0].trim().split('-');
+        const times = parts.at(0).trim().split('-');
         return {
-            start: parseFloat(times[0]) || 0,
-            end: parseFloat(times[1]) || 0,
+            start: parseFloat(times.at(0)) || 0,
+            end: parseFloat(times.at(1)) || 0,
             text: parts.slice(1).join('|').trim()
         };
     }).filter(Boolean);
@@ -555,7 +561,7 @@ function updateScene(t) {
             camera.lookAt(0, 1.3, 13.8);
         } else {
             const jumpT = localT - 3.4;
-            playerRoot.rotation.y = 0; // Прыгает вперед за край острова (+Z)
+            playerRoot.rotation.y = 0;
             const jumpZ = 13.8 + jumpT * 3.8;
             const jumpY = Math.sin(Math.min(1, jumpT / 1.4) * Math.PI) * 2.2 - Math.pow(Math.max(0, jumpT - 0.5), 2) * 3.5;
             playerRoot.position.set(0, jumpY, jumpZ);
@@ -724,7 +730,7 @@ document.getElementById('btnHorizontal').onclick = (e) => {
 };
 
 document.getElementById('skinInput').onchange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files.item(0);
     if (!file) return;
     const img = new Image();
     img.onload = () => {
@@ -735,7 +741,8 @@ document.getElementById('skinInput').onchange = (e) => {
 };
 
 document.getElementById('audioInput').onchange = (e) => {
-    if (e.target.files[0]) setupAudio(e.target.files[0]);
+    const file = e.target.files.item(0);
+    if (file) setupAudio(file);
 };
 
 document.getElementById('applySubsBtn').onclick = parseSubtitles;
@@ -746,48 +753,69 @@ let recordedChunks = [];
 
 recordBtn.onclick = () => {
     if (isRecording) return;
-    isRecording = true;
-    recordBtn.classList.add('recording');
-    recordBtn.textContent = 'Идет запись (0:22)...';
-    recordStatus.textContent = 'Не закрывайте вкладку, ролик записывается в реальном времени...';
+    
+    try {
+        isRecording = true;
+        recordBtn.classList.add('recording');
+        recordBtn.textContent = 'Идет запись (0:22)...';
+        recordStatus.textContent = 'Не закрывайте вкладку, ролик записывается 22 секунды...';
 
-    currentTime = 0;
-    isPlaying = true;
-    playPauseBtn.textContent = 'Пауза';
+        currentTime = 0;
+        isPlaying = true;
+        playPauseBtn.textContent = 'Пауза';
 
-    const canvasStream = outputCanvas.captureStream(60);
-    if (audioDestination) {
-        audioDestination.stream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
-    }
+        const canvasStream = outputCanvas.captureStream(30);
+        if (audioDestination) {
+            audioDestination.stream.getAudioTracks().forEach(track => canvasStream.addTrack(track));
+        }
 
-    recordedChunks = [];
-    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-        ? 'video/webm;codecs=vp9'
-        : 'video/webm';
+        recordedChunks = [];
+        let mimeType = 'video/webm';
+        let ext = 'webm';
+        if (MediaRecorder.isTypeSupported('video/mp4')) {
+            mimeType = 'video/mp4';
+            ext = 'mp4';
+        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+            mimeType = 'video/webm;codecs=vp9';
+        }
 
-    mediaRecorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 6000000 });
-    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
-    mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Aetherfall_SMP_Promo_${aspectMode.replace(':', 'x')}.webm`;
-        a.click();
+        mediaRecorder = new MediaRecorder(canvasStream, { mimeType, videoBitsPerSecond: 5000000 });
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+        };
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `Aetherfall_SMP_Promo_${aspectMode.replace(':', 'x')}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 1000);
 
+            isRecording = false;
+            recordBtn.classList.remove('recording');
+            recordBtn.textContent = '● Записать и скачать видео';
+            recordStatus.textContent = 'Готово! Видео сохранено в загрузки.';
+        };
+
+        if (audioElement) {
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            audioElement.currentTime = 0;
+            audioElement.play();
+        }
+
+        mediaRecorder.start(200);
+    } catch (err) {
         isRecording = false;
         recordBtn.classList.remove('recording');
         recordBtn.textContent = '● Записать и скачать видео';
-        recordStatus.textContent = 'Готово! Видео сохранено в загрузки.';
-    };
-
-    if (audioElement) {
-        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-        audioElement.currentTime = 0;
-        audioElement.play();
+        recordStatus.textContent = 'Ошибка записи: ' + err.message;
     }
-
-    mediaRecorder.start();
 };
 
 // Главный цикл
