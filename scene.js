@@ -198,8 +198,7 @@ const bgIslands = [];
 const islandCoords = [
     [-14, 2, 6],
     [15, -1, 10],
-    [-12, 5, 22],
-    [14, 4, 24]
+    [-12, 5, 22]
 ];
 islandCoords.forEach((coord) => {
     const ix = coord.at(0), iy = coord.at(1), iz = coord.at(2);
